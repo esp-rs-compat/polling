@@ -108,12 +108,13 @@ impl Poller {
         {
             extern "C" {
                 fn eventfd(initval: libc::c_uint, flags: libc::c_int) -> libc::c_int;
+                fn __errno() -> *mut libc::c_int;
             }
 
             let fd = unsafe { eventfd(0, 0) };
             if fd == -1 {
                 // TODO: Switch back to syscall! once eventfd is in libc for the ESP-IDF
-                return Err(std::io::ErrorKind::Other.into());
+                return Err(std::io::Error::new(std::io::ErrorKind::Other, format!("eventfd(0,0) returned {}", unsafe { *__errno() })));
             }
 
             notify_pipe[0] = fd;
